@@ -15,12 +15,12 @@ app.post("/offer", async (req, res) => {
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
   });
 
-  pc.oniceconnectionstatechange = () => {
+  pc.oniceconnectionstatechange = async () => {
     console.log("📶 Server ICE state:", pc.iceConnectionState);
     if (pc.iceConnectionState === "connected") {
-      console.log("✅ Server ICE connected");
+      console.log("✅ Server ICE connected", await pc.getStats());
     } else if (pc.iceConnectionState === "failed") {
-      console.log("❌ Server ICE failed");
+      console.log("❌ Server ICE failed", await pc.getStats());
     }
   };
 
