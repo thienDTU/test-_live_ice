@@ -10,7 +10,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.post("/offer", async (req, res) => {
   const { sdp } = req.body;
-
+  console.log("📩 Server received offer request", sdp);
   const pc = new wrtc.RTCPeerConnection({
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
   });
@@ -43,7 +43,7 @@ app.post("/offer", async (req, res) => {
   await pc.setLocalDescription(answer);
 
   await waitIceGatheringComplete(); // ⬅ Chờ ICE gathering xong
-
+  console.log("📤 Server sending answer:", pc.localDescription.sdp);
   res.json({ sdp: pc.localDescription.sdp }); // Lúc này mới gửi SDP đầy đủ
 });
 

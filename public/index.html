@@ -98,13 +98,19 @@
         });
 
         // Gửi offer lên server
+        log("📤 Sending offer to server...");
         const response = await fetch("/offer", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ sdp: pc.localDescription.sdp })
         });
 
-        const { sdp } = await response.json();
+        const resp = await response.json();
+        const { sdp } = resp;
+        log("📥 Received answer from server, setting remote description...");
+        log("SDP Answer:", sdp);
+        //log response.json();
+        log(resp);
 
         // ❗ ĐẢM BẢO chờ ICE candidate được phản hồi đầy đủ từ server
         await pc.setRemoteDescription({ type: "answer", sdp });
