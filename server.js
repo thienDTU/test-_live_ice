@@ -30,12 +30,23 @@ app.post("/offer", async (req, res) => {
     event.channel.onmessage = (msg) => console.log("💬 Server received:", msg.data);
   };
 
+  // 👇 Phải chờ ICE candidate gathering hoàn tất
+  const waitIceGatheringComplete = () => new Promise(resolve => {
+    if (pc.iceGatheringState === "complete") return resolve();
+    pc.onicegatheringstatechange = () => {
+      if (pc.iceGatheringState === "complete") resolve();
+    };
+  });
+
   await pc.setRemoteDescription({ type: "offer", sdp });
   const answer = await pc.createAnswer();
   await pc.setLocalDescription(answer);
 
-  res.json({ sdp: pc.localDescription.sdp });
+  await waitIceGatheringComplete(); // ⬅ Chờ ICE gathering xong
+
+  res.json({ sdp: pc.localDescription.sdp }); // Lúc này mới gửi SDP đầy đủ
 });
+
 
 const PORT = 7088;
 app.listen(PORT, () => {
