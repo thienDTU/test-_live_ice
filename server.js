@@ -37,7 +37,7 @@ app.post("/offer", async (req, res) => {
   res.json({ sdp: pc.localDescription.sdp });
 });
 
-const PORT = 3478;
+const PORT = 7088;
 app.listen(PORT, () => {
   console.log(`✅ ICE Test Server running at http://localhost:${PORT}`);
 });
