@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>ICE Connectivity Test</title>
+  <style>
+    body { font-family: monospace; background: #f0f0f0; padding: 20px; }
+    pre { background: #fff; padding: 10px; border: 1px solid #ccc; height: 300px; overflow-y: scroll; }
+  </style>
+</head>
+<body>
+  <h2>🧪 ICE Test (Client Side)</h2>
+  <pre id="log"></pre>
+
+  <script>
+    const logBox = document.getElementById("log");
+    const log = (msg) => {
+      console.log(msg);
+      logBox.textContent += msg + "\n";
+      logBox.scrollTop = logBox.scrollHeight;
+    };
+
+    const pc = new RTCPeerConnection({
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+      iceCandidatePoolSize: 10
+    });
+
+    const dc = pc.createDataChannel("test");
+    dc.onopen = () => {
+      log("📡 DataChannel open (client)");
+      dc.send("Hello from client!");
+    };
+
+    dc.onmessage = (e) => log("💬 Message from server: " + e.data);
+
+    pc.onicecandidate = (e) => {
+      if (e.candidate) {
+        const cand = e.candidate.candidate;
+        const type = (cand.match(/typ\s(\w+)/) || [])[1] || "unknown";
+        log(`📨 ICE candidate (${type}): ${cand}`);
+      } else {
+        log("✅ ICE gathering complete\n");
+      }
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      const state = pc.iceConnectionState;
+      log(`📡 ICE state changed: ${state}`);
+      if (state === "connected" || state === "completed") {
+        log("✅ ICE connected!\n");
+        setTimeout(getSelectedPair, 2000);  // thêm delay để đảm bảo stats đầy đủ
+      } else if (state === "failed") {
+        log("❌ ICE failed");
+      }
+    };
+
+    async function getSelectedPair() {
+  const stats = await pc.getStats();
+  let selectedPair = null;
+  const localCandidates = {};
+  const remoteCandidates = {};
+
+  stats.forEach(report => {
+    if (report.type === "local-candidate") localCandidates[report.id] = report;
+    if (report.type === "remote-candidate") remoteCandidates[report.id] = report;
+    if (report.type === "candidate-pair" && (report.selected || report.nominated || report.state === "succeeded")) {
+      selectedPair = report;
+    }
+  });
+
+  if (selectedPair) {
+    const local = localCandidates[selectedPair.localCandidateId];
+    const remote = remoteCandidates[selectedPair.remoteCandidateId];
+
+    if (local && remote) {
+      log(`✅ Selected candidate pair:`);
+      log(`→ local: ${local.candidateType} ${local.address}:${local.port}`);
+      log(`→ remote: ${remote.candidateType} ${remote.address}:${remote.port}`);
+    } else {
+      log("⚠️ Selected pair found but candidate details missing.");
+    }
+  } else {
+    log("❌ No candidate-pair with 'selected' or 'succeeded' found.");
+  }
+}
+
+
+    async function start() {
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      await new Promise(resolve => {
+        if (pc.iceGatheringState === "complete") return resolve();
+        pc.onicegatheringstatechange = () => {
+          if (pc.iceGatheringState === "complete") resolve();
+        };
+      });
+
+      const response = await fetch("/offer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sdp: pc.localDescription.sdp })
+      });
+
+      const { sdp } = await response.json();
+      await pc.setRemoteDescription({ type: "answer", sdp });
+    }
+
+    start();
+  </script>
+</body>
+</html>
