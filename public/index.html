@@ -86,25 +86,30 @@
 
 
     async function start() {
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
 
-      await new Promise(resolve => {
-        if (pc.iceGatheringState === "complete") return resolve();
-        pc.onicegatheringstatechange = () => {
-          if (pc.iceGatheringState === "complete") resolve();
-        };
-      });
+        // Chờ ICE gathering ở client xong (tốt)
+        await new Promise(resolve => {
+            if (pc.iceGatheringState === "complete") return resolve();
+            pc.onicegatheringstatechange = () => {
+            if (pc.iceGatheringState === "complete") resolve();
+            };
+        });
 
-      const response = await fetch("/offer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sdp: pc.localDescription.sdp })
-      });
+        // Gửi offer lên server
+        const response = await fetch("/offer", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sdp: pc.localDescription.sdp })
+        });
 
-      const { sdp } = await response.json();
-      await pc.setRemoteDescription({ type: "answer", sdp });
-    }
+        const { sdp } = await response.json();
+
+        // ❗ ĐẢM BẢO chờ ICE candidate được phản hồi đầy đủ từ server
+        await pc.setRemoteDescription({ type: "answer", sdp });
+        }
+
 
     start();
   </script>
