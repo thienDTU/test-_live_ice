@@ -16,8 +16,10 @@ app.post("/offer", async (req, res) => {
       // { urls: "stun:stun.l.google.com:19302" },
               {
                           "urls": "turn:turn-stg-01.clickqa.net:3479",
-                          "username": "1754818227",
-                          "credential": "j8A6o9oJKrI+VxTK79dSkZr23CQ="
+                                    "username": "username",
+                          "credential": "password"
+                          // "username": "1754818227",
+                          // "credential": "j8A6o9oJKrI+VxTK79dSkZr23CQ="
                       },
               ],
     iceTransportPolicy: "relay",
