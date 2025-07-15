@@ -15,7 +15,7 @@ app.post("/offer", async (req, res) => {
     iceServers: [
       // { urls: "stun:stun.l.google.com:19302" },
               {
-                          "urls": "turn:turn-stg-01.clickqa.net:3479",
+                          "urls": "turn:103.156.46.99:3479",
                                     "username": "username",
                           "credential": "password"
                           // "username": "1754818227",
